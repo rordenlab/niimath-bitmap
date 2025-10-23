@@ -1,6 +1,6 @@
 # Volume to bitmap creation
 
-Starting with niimath version v1.0.20251007, the software can now create 2D bitmap images in the PNG format. This feature provides a lightweight way to visualize NIfTI images directly. This repository includes sample images and scripts to demonstrate these features, as well as providing documentation. You can try these out by downloading this repository:
+Starting with niimath version v1.0.20251023, the software can now create 2D bitmap images in the PNG format. This feature provides a lightweight way to visualize NIfTI images directly. This repository includes sample images and scripts to demonstrate these features, as well as providing documentation. You can try these out by downloading this repository:
 
 ```
 git clone https://github.com/rordenlab/niimath-bitmap
@@ -26,13 +26,21 @@ niimath T1 -bitmap -y 0.33 0.66 -z 0.33 0.66 -X 0.5 -c viridis cross.png
 
 ![cross](./png/cross.png)
 
-The `-N` allows you to also show a negative colormap. Note we can set the thresholds for the image with `-t` for the background image and `-T` for the overlay. Here we show t-scores that exceed 4 in red, and those less than -4 in blue-green. We also scale the image by a factor of 2 (`-s 2`) with nearest-neighbor interpolation (`-n`).
+The `-N` allows you to also show a negative colormap. Note we can set the thresholds for the image with `-t` for the background image and `-T` for the overlay. Here we show t-scores that exceed 4 in red, and those less than -4 in blue-green. We also scale the image by a factor of 2 (`-s 2`) with nearest-neighbor interpolation (`-n`). It also shows a 12-pixel high color gradient (`-g 12`).
 
 ```
-niimath fslmean -bitmap fslt -T 4 7 -N -z 0.22 0.6 0.7 0.8 0.9 -X 0.5 -s 2 -n tscores.png
+niimath fslmean -bitmap fslt -T 4 7 -N -z 0.22 0.6 0.7 0.8 0.9 -X 0.5 -s 2 -g 12 -n tscores.png
 ```
 
 ![t-scores](./png/tscores.png)
+
+With the default scaling, overlay values between the thresholds (e.g., 4–7) use the full colormap range. In the example above, voxels near 4 appear black and those near 7 bright red. Adding the jump flag (`-j`) maps colors from 0 to the upper threshold, so although voxels below 4 remain transparent, those just above 4 start as dark red. The colorbar thus spans 0–7 rather than 4–7.
+
+```
+niimath fslmean -bitmap fslt -T 4 7 -N -z 0.22 0.6 0.7 0.8 0.9 -X 0.5 -s 2 -g 12 -n -j jscores.png
+```
+
+![t-scores with jump](./png/jscores.png)
 
 By default, niimath bitmaps are shown in radiological orientation, similar to FSL's slicer tool. You can flip the left-right dimension to radiological orientation using the `-f` option. Also like fsl's slicer, you can use `-a` (all) as a shortcut for `-x 0.5 -y 0.5 -z 0.5`. 
 
@@ -100,8 +108,10 @@ These options build a tiled layout of slices (sagittal/coronal/axial).
 
 These are image-wide and may appear anywhere in the `-bitmap` argument list.
 
+- `-g <pixels>` : show colorbar gradient at the bottom with specified height.
 - `-f [0|1]` : radiological orientation (default `1`). If omitted the shorthand `-f` sets to `0` (neurological).  
   `isRadiological = 1` means radiological (left appears on image right).
+- `-j` : Jump overlay colorbar range, so color is 0..max for threshold min..max.
 - `-u [0|1]` : draw left/right labels (default `1`). Omit argument to set to `0`.
 - `-n [0|1]` : interpolation order: `0 = nearest`, `1 = linear` (default `1`). If alone, `-n` sets `0`.
 - `-N [0|1]` : turn negative colormap on or off.
@@ -159,3 +169,5 @@ This README documents behavior of the `niimath` `-bitmap` exporter implemented b
  [nii2png](https://github.com/alexlaurence/NIfTI-Image-Converter).
 - [FSL](https://fsl.fmrib.ox.ac.uk/fsl/docs/)  includes a utility `slicer` for generating images.
 - [med2image](https://github.com/FNNDSC/med2image) is a Python script for generating PNG/JPG bitmaps from DICOM/NIfTI volumes.
+- FreeSurfer can generate images, albeit this briefly loads the graphical interface so it is slow and does not support headless usage. For example `freeview -v T1.nii.gz -viewport axial -slice 0 0 20 -ss slice_axial.png`
+- [chauffeur_afni](https://afni.nimh.nih.gov/pub/dist/doc/htmldoc/tutorials/auto_image/auto_%40chauffeur_afni.html) provides powerful commands for creating bitmaps.
